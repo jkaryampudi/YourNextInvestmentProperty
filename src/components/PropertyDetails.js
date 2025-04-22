@@ -9,7 +9,7 @@ const PropertyDetails = ({ property, onClose }) => {
   const [directions, setDirections] = useState(null);
   
   // Google Maps API key - in a production app, this should be stored in environment variables
-  const googleMapsApiKey = "AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg"; // This is a public test key from Google
+  const googleMapsApiKey = "AIzaSyCVwo3MHXvfw_iFOZZMwKD4KJWlYZ3fQJA"; // This is a public test key from Google
   
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
