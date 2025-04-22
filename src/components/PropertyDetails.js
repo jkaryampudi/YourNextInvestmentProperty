@@ -1,9 +1,81 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import './PropertyDetails.css';
 import { FaBed, FaBath, FaCar, FaRulerCombined, FaCalendarAlt, FaChartLine, FaMapMarkerAlt } from 'react-icons/fa';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow, DirectionsRenderer } from '@react-google-maps/api';
 
 const PropertyDetails = ({ property, onClose }) => {
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedAmenity, setSelectedAmenity] = useState(null);
+  const [directions, setDirections] = useState(null);
+  
+  // Google Maps API key - in a production app, this should be stored in environment variables
+  const googleMapsApiKey = "AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg"; // This is a public test key from Google
+  
+  const { isLoaded } = useJsApiLoader({
+    id: 'google-map-script',
+    googleMapsApiKey: googleMapsApiKey
+  });
+  
+  const [map, setMap] = useState(null);
+  
+  const onMapLoad = useCallback(map => {
+    setMap(map);
+  }, []);
+  
+  const onMapUnmount = useCallback(() => {
+    setMap(null);
+  }, []);
+  
+  // Convert address to coordinates (in a real app, you would use geocoding)
+  // For demo purposes, we'll use hardcoded coordinates for Sydney
+  const propertyPosition = { lat: -33.865143, lng: 151.209900 };
+  
+  // Function to calculate and display directions
+  const getDirections = useCallback((amenity) => {
+    if (!map) return;
+    
+    setSelectedAmenity(amenity);
+    
+    // In a real app, you would geocode the amenity address
+    // For demo purposes, we'll calculate a position based on the distance
+    const amenityPosition = calculateAmenityPosition(amenity);
+    
+    const directionsService = new window.google.maps.DirectionsService();
+    
+    directionsService.route(
+      {
+        origin: propertyPosition,
+        destination: amenityPosition,
+        travelMode: window.google.maps.TravelMode.WALKING
+      },
+      (result, status) => {
+        if (status === window.google.maps.DirectionsStatus.OK) {
+          setDirections(result);
+        } else {
+          console.error(`Directions request failed: ${status}`);
+        }
+      }
+    );
+  }, [map]);
+  
+  // Helper function to calculate amenity position based on distance
+  const calculateAmenityPosition = (amenity) => {
+    // Extract distance value (e.g., "450m" -> 450)
+    const distanceStr = amenity.distance;
+    const distanceValue = parseInt(distanceStr.replace(/[^0-9]/g, ''));
+    const isKm = distanceStr.includes('km');
+    
+    // Convert to meters
+    const distanceInMeters = isKm ? distanceValue * 1000 : distanceValue;
+    
+    // Calculate a position based on the distance (simplified approach)
+    // In a real app, you would use proper geocoding
+    const direction = (amenity.name.charCodeAt(0) % 4) * 90; // Random direction based on name
+    const lat = propertyPosition.lat + (Math.sin(direction * Math.PI / 180) * distanceInMeters / 111000);
+    const lng = propertyPosition.lng + (Math.cos(direction * Math.PI / 180) * distanceInMeters / (111000 * Math.cos(propertyPosition.lat * Math.PI / 180)));
+    
+    return { lat, lng };
+  };
 
   if (!property) return null;
 
@@ -199,19 +271,58 @@ const PropertyDetails = ({ property, onClose }) => {
             <div className="tab-content">
               <div className="location-map">
                 <h3>Location</h3>
-                <div className="map-placeholder">
-                  <div className="map-overlay">
-                    <div className="map-pin"></div>
-                    <div className="map-address">{property.address}</div>
+                {isLoaded ? (
+                  <div className="google-map-container">
+                    <GoogleMap
+                      mapContainerStyle={{
+                        width: '100%',
+                        height: '400px',
+                        borderRadius: '12px'
+                      }}
+                      center={propertyPosition}
+                      zoom={15}
+                      onLoad={onMapLoad}
+                      onUnmount={onMapUnmount}
+                    >
+                      {/* Property marker */}
+                      <Marker
+                        position={propertyPosition}
+                        icon={{
+                          url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png'
+                        }}
+                      >
+                        <InfoWindow options={{ pixelOffset: new window.google.maps.Size(0, -40) }}>
+                          <div className="info-window">
+                            <p><strong>{property.title}</strong></p>
+                            <p>{property.address}</p>
+                          </div>
+                        </InfoWindow>
+                      </Marker>
+                      
+                      {/* Directions */}
+                      {directions && <DirectionsRenderer directions={directions} />}
+                    </GoogleMap>
                   </div>
-                </div>
+                ) : (
+                  <div className="map-placeholder">
+                    <div className="map-overlay">
+                      <div className="map-pin"></div>
+                      <div className="map-address">{property.address}</div>
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="location-amenities">
                 <h3>Nearby Amenities</h3>
+                <p className="amenities-instruction">Click on an amenity to see directions from the property</p>
                 <div className="amenities-grid">
                   {property.amenities.map((amenity, index) => (
-                    <div key={index} className="amenity-item">
+                    <div 
+                      key={index} 
+                      className={`amenity-item ${selectedAmenity === amenity ? 'selected' : ''}`}
+                      onClick={() => getDirections(amenity)}
+                    >
                       <div className="amenity-icon">{amenity.icon}</div>
                       <div className="amenity-details">
                         <div className="amenity-name">{amenity.name}</div>

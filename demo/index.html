@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Property Details Demo</title>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px 0;
+            text-align: center;
+        }
+        h1 {
+            margin: 0;
+        }
+        .property-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .property-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+        }
+        .property-content {
+            padding: 20px;
+        }
+        .property-title {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+        .property-address {
+            color: #666;
+            margin-bottom: 15px;
+        }
+        .property-price {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #2980b9;
+            margin-bottom: 15px;
+        }
+        .property-features {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .feature {
+            margin-right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .feature-icon {
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s ease;
+        }
+        .btn:hover {
+            background-color: #2980b9;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .modal-content {
+            background-color: white;
+            margin: 50px auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1000px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 30px;
+            color: white;
+            cursor: pointer;
+            z-index: 1001;
+        }
+        .property-header {
+            height: 300px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+            color: white;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1473&q=80');
+        }
+        .property-header-content h2 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        .property-header-content p {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        .property-header-content .price {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        .tab {
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            color: #3498db;
+            border-bottom: 3px solid #3498db;
+        }
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .specs {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+        .spec {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 5px;
+            border-radius: 4px;
+        }
+        .spec-icon {
+            font-size: 1.5rem;
+            color: #3498db;
+            margin-bottom: 10px;
+        }
+        .spec-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .spec-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .map-container {
+            height: 400px;
+            width: 100%;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        .amenities {
+            display: flex;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+        .amenity {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f8f9fa;
+            margin: 10px;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            display: flex;
+            align-items: center;
+        }
+        .amenity:hover, .amenity.active {
+            background-color: #e3f2fd;
+        }
+        .amenity.active {
+            border: 2px solid #3498db;
+        }
+        .amenity-icon {
+            width: 40px;
+            height: 40px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+        .amenity-details h4 {
+            margin: 0 0 5px 0;
+        }
+        .amenity-details p {
+            margin: 0;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NSW Property Insights - Demo</h1>
+    </header>
+
+    <div class="container">
+        <h2>Fixed "View Details" Button & Map Integration Demo</h2>
+        <p>This demo shows the two key fixes implemented:</p>
+        <ol>
+            <li>The "View Details" button now properly opens the property details modal</li>
+            <li>The map in the Location tab now displays properly with the property location and nearby amenities</li>
+        </ol>
+
+        <div class="property-card">
+            <div class="property-image" style="background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1473&q=80');"></div>
+            <div class="property-content">
+                <h3 class="property-title">Modern 3 Bedroom Apartment</h3>
+                <p class="property-address">123 Summer Hill Avenue, Summer Hill, NSW</p>
+                <p class="property-price">$850,000</p>
+                <div class="property-features">
+                    <div class="feature">
+                        <span class="feature-icon">🛏️</span>
+                        <span>3 Beds</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🚿</span>
+                        <span>2 Baths</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🚗</span>
+                        <span>1 Parking</span>
+                    </div>
+                </div>
+                <button class="btn" onclick="openPropertyDetails()">View Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Property Details Modal -->
+    <div id="propertyModal" class="modal">
+        <span class="close-btn" onclick="closePropertyDetails()">&times;</span>
+        <div class="modal-content">
+            <div class="property-header">
+                <div class="property-header-content">
+                    <h2>Modern 3 Bedroom Apartment</h2>
+                    <p>123 Summer Hill Avenue, Summer Hill, NSW</p>
+                    <p class="price">$850,000</p>
+                </div>
+            </div>
+
+            <div class="specs">
+                <div class="spec">
+                    <div class="spec-icon">🛏️</div>
+                    <div class="spec-value">3</div>
+                    <div class="spec-label">Bedrooms</div>
+                </div>
+                <div class="spec">
+                    <div class="spec-icon">🚿</div>
+                    <div class="spec-value">2</div>
+                    <div class="spec-label">Bathrooms</div>
+                </div>
+                <div class="spec">
+                    <div class="spec-icon">🚗</div>
+                    <div class="spec-value">1</div>
+                    <div class="spec-label">Parking</div>
+                </div>
+                <div class="spec">
+                    <div class="spec-icon">📏</div>
+                    <div class="spec-value">95m²</div>
+                    <div class="spec-label">Area</div>
+                </div>
+                <div class="spec">
+                    <div class="spec-icon">📅</div>
+                    <div class="spec-value">2023</div>
+                    <div class="spec-label">Built</div>
+                </div>
+            </div>
+
+            <div class="tabs">
+                <div class="tab active" onclick="openTab('overview')">Overview</div>
+                <div class="tab" onclick="openTab('investment')">Investment Analysis</div>
+                <div class="tab" onclick="openTab('features')">Features</div>
+                <div class="tab" onclick="openTab('location')">Location</div>
+            </div>
+
+            <div id="overview" class="tab-content active">
+                <h3>Property Description</h3>
+                <p>This stunning modern apartment offers the perfect blend of comfort and style in the heart of Summer Hill. With three spacious bedrooms, two elegant bathrooms, and a secure parking space, this property is ideal for both homeowners and investors.</p>
+                <p>The open-plan living area flows seamlessly to a private balcony, perfect for entertaining or relaxing. The kitchen features premium appliances, stone countertops, and ample storage space.</p>
+                <p>Located just minutes from Summer Hill station, shopping centers, schools, and parks, this property offers convenience and lifestyle in one of Sydney's most sought-after suburbs.</p>
+            </div>
+
+            <div id="investment" class="tab-content">
+                <h3>Investment Metrics</h3>
+                <div class="specs">
+                    <div class="spec">
+                        <div class="spec-icon">💰</div>
+                        <div class="spec-value">4.2%</div>
+                        <div class="spec-label">Rental Yield</div>
+                    </div>
+                    <div class="spec">
+                        <div class="spec-icon">📈</div>
+                        <div class="spec-value">5.8%</div>
+                        <div class="spec-label">Capital Growth</div>
+                    </div>
+                    <div class="spec">
+                        <div class="spec-icon">💵</div>
+                        <div class="spec-value">$120</div>
+                        <div class="spec-label">Weekly Cashflow</div>
+                    </div>
+                </div>
+                <h3>Financial Analysis</h3>
+                <p>Based on current market trends, this property offers excellent investment potential with a rental yield of 4.2%, which is above the suburb average of 3.8%.</p>
+                <p>The estimated weekly rent is $690, providing an annual rental income of approximately $35,880.</p>
+                <p>With annual expenses estimated at $8,500 (including strata fees, council rates, and maintenance), the net annual income is approximately $27,380.</p>
+                <p>The property is located in a high-growth area with a projected capital growth of 5.8% per annum over the next 5 years.</p>
+            </div>
+
+            <div id="features" class="tab-content">
+                <h3>Property Features</h3>
+                <ul>
+                    <li>Modern open-plan design with abundant natural light</li>
+                    <li>Gourmet kitchen with stone countertops and premium appliances</li>
+                    <li>Master bedroom with ensuite and built-in wardrobes</li>
+                    <li>Two additional bedrooms with built-in wardrobes</li>
+                    <li>Main bathroom with bathtub and separate shower</li>
+                    <li>Private balcony with district views</li>
+                    <li>Secure underground parking</li>
+                    <li>Storage cage</li>
+                    <li>Split-system air conditioning</li>
+                    <li>Engineered timber flooring</li>
+                    <li>Security intercom system</li>
+                    <li>Lift access</li>
+                </ul>
+            </div>
+
+            <div id="location" class="tab-content">
+                <h3>Location</h3>
+                <p>123 Summer Hill Avenue, Summer Hill, NSW</p>
+                
+                <div id="map" class="map-container"></div>
+                
+                <h3>Nearby Amenities</h3>
+                <p>Click on an amenity to see directions from the property</p>
+                
+                <div class="amenities">
+                    <div class="amenity" onclick="showDirections('station')">
+                        <div class="amenity-icon">🚆</div>
+                        <div class="amenity-details">
+                            <h4>Summer Hill Station</h4>
+                            <p>350m</p>
+                        </div>
+                    </div>
+                    <div class="amenity" onclick="showDirections('shopping')">
+                        <div class="amenity-icon">🛒</div>
+                        <div class="amenity-details">
+                            <h4>Summer Hill Village</h4>
+                            <p>500m</p>
+                        </div>
+                    </div>
+                    <div class="amenity" onclick="showDirections('school')">
+                        <div class="amenity-icon">🏫</div>
+                        <div class="amenity-details">
+                            <h4>Summer Hill Public School</h4>
+                            <p>750m</p>
+                        </div>
+                    </div>
+                    <div class="amenity" onclick="showDirections('medical')">
+                        <div class="amenity-icon">🏥</div>
+                        <div class="amenity-details">
+                            <h4>Inner West Medical Centre</h4>
+                            <p>1.1km</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Property coordinates
+        const propertyPosition = { lat: -33.889967, lng: 151.138869 };
+        
+        // Amenity coordinates
+        const amenities = {
+            station: { lat: -33.891967, lng: 151.138269, name: "Summer Hill Station", distance: "350m" },
+            shopping: { lat: -33.887967, lng: 151.139869, name: "Summer Hill Village", distance: "500m" },
+            school: { lat: -33.892967, lng: 151.141869, name: "Summer Hill Public School", distance: "750m" },
+            medical: { lat: -33.885967, lng: 151.142869, name: "Inner West Medical Centre", distance: "1.1km" }
+        };
+        
+        let map;
+        let directionsService;
+        let directionsRenderer;
+        let activeAmenity = null;
+        
+        // Open property details modal
+        function openPropertyDetails() {
+            document.getElementById('propertyModal').style.display = 'block';
+            // Initialize map when location tab is opened
+            if (document.getElementById('location').classList.contains('active')) {
+                initMap();
+            }
+        }
+        
+        // Close property details modal
+        function closePropertyDetails() {
+            document.getElementById('propertyModal').style.display = 'none';
+        }
+        
+        // Switch tabs
+        function openTab(tabName) {
+            // Hide all tab content
+            const tabContents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < tabContents.length; i++) {
+                tabContents[i].classList.remove('active');
+            }
+            
+            // Remove active class from all tabs
+            const tabs = document.getElementsByClassName('tab');
+            for (let i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            
+            // Show the selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to the clicked tab
+            event.currentTarget.classList.add('active');
+            
+            // Initialize map when location tab is opened
+            if (tabName === 'location') {
+                initMap();
+            }
+        }
+        
+        // Initialize Google Map
+        function initMap() {
+            // If map is already initialized, return
+            if (map) return;
+            
+            // Create map
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: propertyPosition,
+                zoom: 15
+            });
+            
+            // Create directions service and renderer
+            directionsService = new google.maps.DirectionsService();
+            directionsRenderer = new google.maps.DirectionsRenderer({
+                map: map,
+                suppressMarkers: true
+            });
+            
+            // Add property marker
+            const propertyMarker = new google.maps.Marker({
+                position: propertyPosition,
+                map: map,
+                title: "Modern 3 Bedroom Apartment",
+                icon: {
+                    url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+                }
+            });
+            
+            // Add property info window
+            const propertyInfoWindow = new google.maps.InfoWindow({
+                content: `
+                    <div style="max-width: 200px;">
+                        <h3 style="margin: 0 0 5px 0; font-size: 16px;">Modern 3 Bedroom Apartment</h3>
+                        <p style="margin: 0 0 5px 0; font-size: 14px;">123 Summer Hill Avenue</p>
+                        <p style="margin: 0; font-weight: bold; font-size: 14px;">$850,000</p>
+                    </div>
+                `
+            });
+            
+            // Open info window when marker is clicked
+            propertyMarker.addListener('click', () => {
+                propertyInfoWindow.open(map, propertyMarker);
+            });
+            
+            // Open info window by default
+            propertyInfoWindow.open(map, propertyMarker);
+            
+            // Add amenity markers
+            for (const [key, amenity] of Object.entries(amenities)) {
+                const amenityMarker = new google.maps.Marker({
+                    position: { lat: amenity.lat, lng: amenity.lng },
+                    map: map,
+                    title: amenity.name,
+                    icon: {
+                        url: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png"
+                    }
+                });
+                
+                // Add click listener to show directions
+                amenityMarker.addListener('click', () => {
+                    showDirections(key);
+                });
+            }
+        }
+        
+        // Show directions between property and selected amenity
+        function showDirections(amenityKey) {
+            // Reset active class on all amenities
+            const amenityElements = document.getElementsByClassName('amenity');
+            for (let i = 0; i < amenityElements.length; i++) {
+                amenityElements[i].classList.remove('active');
+            }
+            
+            // Add active class to selected amenity
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // Find the amenity element by its onclick attribute
+                for (let i = 0; i < amenityElements.length; i++) {
+                    if (amenityElements[i].getAttribute('onclick').includes(amenityKey)) {
+                        amenityElements[i].classList.add('active');
+                        break;
+                    }
+                }
+            }
+            
+            // If map is not initialized, initialize it
+            if (!map) {
+                initMap();
+            }
+            
+            // If directions service is not initialized, initialize it
+            if (!directionsService) {
+                directionsService = new google.maps.DirectionsService();
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true
+                });
+            }
+            
+            // Set active amenity
+            activeAmenity = amenityKey;
+            
+            // Calculate and display directions
+            directionsService.route(
+                {
+                    origin: propertyPosition,
+                    destination: { lat: amenities[amenityKey].lat, lng: amenities[amenityKey].lng },
+                    travelMode: google.maps.TravelMode.WALKING
+                },
+                (result, status) => {
+                    if (status === google.maps.DirectionsStatus.OK) {
+                        directionsRenderer.setDirections(result);
+                    } else {
+                        console.error(`Directions request failed: ${status}`);
+                    }
+                }
+            );
+        }
+        
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const modal = document.getElementById('propertyModal');
+            if (event.target === modal) {
+                closePropertyDetails();
+            }
+        }
+    </script>
+</body>
+</html>
