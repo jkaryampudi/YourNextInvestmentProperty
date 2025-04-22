@@ -31,14 +31,15 @@ function App() {
             <>
               <HeroSection />
               <FilterSection />
-              {selectedSuburb && (
+              {selectedSuburb ? (
                 <div className="container">
                   <SuburbProfile suburb={selectedSuburb} onClose={handleCloseProfile} />
                 </div>
+              ) : (
+                <div className="container">
+                  <SuburbList onViewProfile={handleViewProfile} />
+                </div>
               )}
-              <div className="container">
-                <SuburbList onViewProfile={handleViewProfile} />
-              </div>
             </>
           } />
         </Routes>

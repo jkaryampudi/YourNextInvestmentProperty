@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './SuburbProfile.css';
 import { FaInfoCircle, FaHome, FaChartBar, FaMapMarkedAlt, FaBed, FaBath, FaCar, FaRulerCombined, FaMapMarkerAlt, FaHeart, FaRegHeart } from 'react-icons/fa';
+import PropertyDetails from './PropertyDetails';
+import propertyData from '../data/propertyData';
 
 // Mock data for charts
 const priceHistoryData = {
@@ -30,6 +32,7 @@ const investmentMetricsData = {
 const SuburbProfile = ({ suburb, onClose }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [savedProperties, setSavedProperties] = useState([]);
+  const [selectedProperty, setSelectedProperty] = useState(null);
   
   const formatCurrency = (value) => {
     return value.toLocaleString('en-AU', { style: 'currency', currency: 'AUD' })
@@ -42,6 +45,15 @@ const SuburbProfile = ({ suburb, onClose }) => {
     } else {
       setSavedProperties([...savedProperties, propertyId]);
     }
+  };
+  
+  const handleViewDetails = (propertyId) => {
+    const property = propertyData.find(p => p.id === propertyId);
+    setSelectedProperty(property);
+  };
+  
+  const handleClosePropertyDetails = () => {
+    setSelectedProperty(null);
   };
 
   // Draw charts when Market Data tab is active
@@ -381,6 +393,13 @@ const SuburbProfile = ({ suburb, onClose }) => {
 
   return (
     <div className="suburb-profile-container">
+      {selectedProperty && (
+        <PropertyDetails 
+          property={selectedProperty} 
+          onClose={handleClosePropertyDetails} 
+        />
+      )}
+      
       <div className="profile-header-gradient">
         <div className="profile-header-content">
           <h1 className="suburb-title">{suburb.name}</h1>
@@ -585,7 +604,7 @@ const SuburbProfile = ({ suburb, onClose }) => {
                     <span className="listing-date">Listed 28 Mar 2025</span>
                   </div>
                   <div className="property-actions">
-                    <button className="view-details-btn">View Details</button>
+                    <button className="view-details-btn" onClick={() => handleViewDetails(1)}>View Details</button>
                     <button className="save-property-btn" onClick={() => toggleSaveProperty(1)}>
                       {savedProperties.includes(1) ? <FaHeart /> : <FaRegHeart />}
                     </button>
@@ -646,7 +665,7 @@ const SuburbProfile = ({ suburb, onClose }) => {
                     <span className="listing-date">Listed 5 Mar 2025</span>
                   </div>
                   <div className="property-actions">
-                    <button className="view-details-btn">View Details</button>
+                    <button className="view-details-btn" onClick={() => handleViewDetails(2)}>View Details</button>
                     <button className="save-property-btn" onClick={() => toggleSaveProperty(2)}>
                       {savedProperties.includes(2) ? <FaHeart /> : <FaRegHeart />}
                     </button>
@@ -707,7 +726,7 @@ const SuburbProfile = ({ suburb, onClose }) => {
                     <span className="listing-date">Listed 15 Mar 2025</span>
                   </div>
                   <div className="property-actions">
-                    <button className="view-details-btn">View Details</button>
+                    <button className="view-details-btn" onClick={() => handleViewDetails(3)}>View Details</button>
                     <button className="save-property-btn" onClick={() => toggleSaveProperty(3)}>
                       {savedProperties.includes(3) ? <FaHeart /> : <FaRegHeart />}
                     </button>
